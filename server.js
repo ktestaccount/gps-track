@@ -20,6 +20,10 @@ app.post("/save-data", (req, resp) => {
 app.get("/data", (req, resp) => {
     resp.send(datas);
 });
+app.get("/reset-data", (req, resp) => {
+    datas = [];
+    resp.send({ success: true });
+});
 app.listen(httpsPort, () => {
     console.log(`server running at port ${httpsPort}`);
 })
