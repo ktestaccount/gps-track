@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GPS情報取得</title>
+<style>
+    #data {
+        margin-top: 20px;
+    }
+</style>
+</head>
+<body>
+<h1>GPS情報取得</h1>
+<div id="data">
+    <p id="speed">速度: </p>
+    <p id="angle">角度: </p>
+    <p id="distance">総走行距離: </p>
+    <p id="lastUpdate">GPSの更新時間: </p>
+    <p id="location">位置情報: </p>
+</div>
+<button id="startButton">トラッキング開始</button>
+<button id="stopButton">トラッキング停止</button>
+
+<script>
+    let totalDistance = 0;
+    let lastPosition = null;
+    let watchId = null;
+
+    function degreesToRadians(degrees) {
+        return degrees * (Math.PI / 180);
+    }
+
+    function calculateAngle(prevPos, newPos) {
+        const dLon = degreesToRadians(newPos.coords.longitude - prevPos.coords.longitude);
+        const lat1 = degreesToRadians(prevPos.coords.latitude);
+        const lat2 = degreesToRadians(newPos.coords.latitude);
+        const y = Math.sin(dLon) * Math.cos(lat2);
+        const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
+        let angle = Math.atan2(y, x);
+        angle = angle * (180 / Math.PI);
+        return (angle + 360) % 360; // convert angle to 0-360 range
+    }
+
+    function calculateDistance(prevPos, newPos) {
+        const R = 6371; // Radius of the earth in km
+        const dLat = degreesToRadians(newPos.coords.latitude - prevPos.coords.latitude);
+        const dLon = degreesToRadians(newPos.coords.longitude - prevPos.coords.longitude);
+        const a =
+            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(degreesToRadians(prevPos.coords.latitude)) * Math.cos(degreesToRadians(newPos.coords.latitude)) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        const distance = R * c; // Distance in km
+        return distance;
+    }
+
+    function getLocation() {
+        if (navigator.geolocation) {
+            watchId = navigator.geolocation.watchPosition(function (position) {
+                let speed = position.coords.speed ? position.coords.speed.toFixed(2) + ' m/s' : 'N/A';
+                let angle = 'N/A';
+                let distance = 'N/A';
+                let lastUpdate = new Date(position.timestamp).toLocaleString();
+                let location = `緯度: ${position.coords.latitude}, 経度: ${position.coords.longitude}`;
+
+                if (lastPosition) {
+                    angle = calculateAngle(lastPosition, position).toFixed(2) + '°';
+                    distance = calculateDistance(lastPosition, position).toFixed(2) + ' km';
+                    totalDistance += calculateDistance(lastPosition, position);
+                }
+
+                document.getElementById('speed').textContent = '速度: ' + speed;
+                document.getElementById('angle').textContent = '角度: ' + angle;
+                document.getElementById('distance').textContent = '総走行距離: ' + totalDistance.toFixed(2) + ' km';
+                document.getElementById('lastUpdate').textContent = 'GPSの更新時間: ' + lastUpdate;
+                document.getElementById('location').textContent = '位置情報: ' + location;
+
+                lastPosition = position;
+
+                // ここでサーバーにデータを送信する関数を呼び出す
+                sendDataToServer(position);
+            }, function (error) {
+                console.error('位置情報の取得に失敗しました。', error);
+            });
+        } else {
+            console.error('Geolocation is not supported by this browser.');
+        }
+    }
+
+    function stopTracking() {
+        if (watchId !== null) {
+            navigator.geolocation.clearWatch(watchId);
+            watchId = null;
+        }
+    }
+
+    function sendDataToServer(position) {
+        // ここにサーバーへのデータ送信処理を記述する
+        // 例えば、Ajaxを使用してサーバーにデータを送信する
+        // 以下はサーバーにJSON形式でデータを送信する例
+        fetch('/save-data', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                speed: position.coords.speed,
+                angle: calculateAngle(lastPosition, position),
+                distance: calculateDistance(lastPosition, position),
+                timestamp: position.timestamp,
+                latitude: position.coords.latitude,
+                longitude: position.coords.longitude
+            })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Failed to send data to server');
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Data sent successfully:', data);
+        })
+        .catch(error => {
+            console.error('Error sending data to server:', error);
+        });
+    }
+
+    document.getElementById('startButton').addEventListener('click', getLocation);
+    document.getElementById('stopButton').addEventListener('click', stopTracking);
+</script>
+</body>
+</html>
