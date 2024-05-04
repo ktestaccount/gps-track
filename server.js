@@ -9,7 +9,7 @@ const datas = [];
 app.use(bodyParser.json());
 
 app.get("/", (req, resp) => {
-    resp.status(200).send(readFileSync("index.html", {encoding: "utf-8"}));
+    resp.status(200).send(readFileSync("./index.html", {encoding: "utf-8"}));
 });
 app.post("/save-data", (req, resp) => {
     const { speed, angle, distance, timestamp,latitude,longitude } = req.body;
