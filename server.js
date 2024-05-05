@@ -21,7 +21,7 @@ app.get("/data", (req, resp) => {
     resp.send(datas);
 });
 app.get("/reset-data", (req, resp) => {
-    datas = [];
+    let datas = [];
     resp.send({ success: true });
 });
 app.listen(httpsPort, () => {
