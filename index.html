@@ -78,7 +78,7 @@
                 lastPosition = position;
 
                 // ここでサーバーにデータを送信する関数を呼び出す
-                sendDataToServer(position);
+                sendDataToServer(speed,angle,totalDistance.toFixed(2),lastUpdate,location);
             }, function (error) {
                 console.error('位置情報の取得に失敗しました。', error);
             });
@@ -94,7 +94,7 @@
         }
     }
 
-    function sendDataToServer(position) {
+    function sendDataToServer(speed,angle,totalDistance,lastUpdate,location) {
         // ここにサーバーへのデータ送信処理を記述する
         // 例えば、Ajaxを使用してサーバーにデータを送信する
         // 以下はサーバーにJSON形式でデータを送信する例
@@ -104,12 +104,12 @@
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                speed: position.coords.speed,
-                angle: calculateAngle(lastPosition, position),
-                distance: calculateDistance(lastPosition, position),
-                timestamp: position.timestamp,
-                latitude: position.coords.latitude,
-                longitude: position.coords.longitude
+                speed: speed,
+                angle: angle,
+                distance: totalDistance,
+                timestamp: lastUpdate,
+                latitude: location.split(',')[0],
+                longitude: location.split(',')[1]
             })
         })
         .then(response => {
