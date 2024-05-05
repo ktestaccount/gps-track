@@ -58,7 +58,7 @@
     function getLocation() {
         if (navigator.geolocation) {
             watchId = navigator.geolocation.watchPosition(function (position) {
-                let speed = position.coords.speed ? position.coords.speed.toFixed(2) + ' m/s' : 'N/A';
+                let speed = position.coords.speed;
                 let angle = 'N/A';
                 let distance = 'N/A';
                 let lastUpdate = new Date(position.timestamp).toLocaleString();
