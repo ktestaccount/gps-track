@@ -54,39 +54,34 @@
         const distance = R * c; // Distance in km
         return distance;
     }
-    var options = {
-        enableHighAccuracy: true,
-    };
-    function getLocationPromise () {
-        return new Promise((resolve, reject) => {
-            navigator.geolocation.getCurrentPosition(resolve, reject, options);
-        });
-    }
-    async function getLocation() {
+
+    function getLocation() {
         if (navigator.geolocation) {
-            const position = await getLocationPromise();
-            let speed = position.coords.speed;
-            let angle = 'N/A';
-            let distance = 'N/A';
-            let lastUpdate = new Date(position.timestamp).toLocaleString();
-            let location = `緯度: ${position.coords.latitude}, 経度: ${position.coords.longitude}`;
+            watchId = navigator.geolocation.watchPosition(function (position) {
+                let speed = position.coords.speed;
+                let angle = 'N/A';
+                let distance = 'N/A';
+                let lastUpdate = new Date(position.timestamp).toLocaleString();
+                let location = `緯度: ${position.coords.latitude}, 経度: ${position.coords.longitude}`;
 
-            if (lastPosition) {
-                angle = calculateAngle(lastPosition, position).toFixed(2) + '°';
-                distance = calculateDistance(lastPosition, position).toFixed(2) + ' km';
-                totalDistance += calculateDistance(lastPosition, position);
-            }
+                if (lastPosition) {
+                    angle = calculateAngle(lastPosition, position).toFixed(2) + '°';
+                    distance = calculateDistance(lastPosition, position).toFixed(2) + ' km';
+                    totalDistance += calculateDistance(lastPosition, position);
+                }
 
-            document.getElementById('speed').textContent = '速度: ' + speed;
-            document.getElementById('angle').textContent = '角度: ' + angle;
-            document.getElementById('distance').textContent = '総走行距離: ' + totalDistance.toFixed(2) + ' km';
-            document.getElementById('lastUpdate').textContent = 'GPSの更新時間: ' + lastUpdate;
-            document.getElementById('location').textContent = '位置情報: ' + location;
+                document.getElementById('speed').textContent = '速度: ' + speed;
+                document.getElementById('angle').textContent = '角度: ' + angle;
+                document.getElementById('distance').textContent = '総走行距離: ' + totalDistance.toFixed(2) + ' km';
+                document.getElementById('lastUpdate').textContent = 'GPSの更新時間: ' + lastUpdate;
+                document.getElementById('location').textContent = '位置情報: ' + location;
+                lastPosition = position;
 
-            lastPosition = position;
-
-            // ここでサーバーにデータを送信する関数を呼び出す
-            sendDataToServer(position);
+                // ここでサーバーにデータを送信する関数を呼び出す
+                sendDataToServer(position);
+            }, function (error) {
+                console.error('位置情報の取得に失敗しました。', error);
+            });
         } else {
             console.error('Geolocation is not supported by this browser.');
         }
