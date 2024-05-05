@@ -5,7 +5,7 @@ const webSocket = require("ws");
 const https = require("https");
 const app = express();
 const httpsPort = process.env.PORT || 8000;
-const datas = [];
+let datas = [];
 app.use(bodyParser.json());
 
 app.get("/", (req, resp) => {
@@ -21,7 +21,7 @@ app.get("/data", (req, resp) => {
     resp.send(datas);
 });
 app.get("/reset-data", (req, resp) => {
-    datas = [];
+    let datas = [];
     resp.send({ success: true });
 });
 app.listen(httpsPort, () => {
